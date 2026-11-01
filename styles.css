@@ -444,3 +444,36 @@ body, body * {
   .footer-links { display: flex; margin: 8px 0 0; }
   .footer-links a { font-size: 9px; }
 }
+
+/* Sound controls and replay recap. */
+.sound-toggle {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(0,51,102,.24);
+  border-radius: 5px;
+  background: #fff;
+  color: #003366;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.sound-toggle:hover { background: #fff7e1; }
+.sound-toggle:focus-visible { outline: 3px solid rgba(46,157,247,.45); outline-offset: 2px; }
+.round-recap {
+  width: min(430px, calc(100% - 30px));
+  margin: 15px auto 18px;
+  padding: 12px 16px;
+  border: 1px solid rgba(0,51,102,.16);
+  border-radius: 8px;
+  background: rgba(255,255,255,.78);
+  color: #003366;
+}
+.round-recap p { margin: 4px 0; font-size: 12px; line-height: 1.5; }
+.round-recap p:first-child { font-weight: 800; }
+.round-recap strong { color: #146da8; }
+@media(max-width:560px) {
+  .topbar { width: calc(100% - 24px); }
+  .sound-toggle { min-height: 30px; padding: 0 9px; font-size: 9px; }
+  .round-recap { margin: 12px auto 15px; padding: 10px 12px; }
+  .round-recap p { font-size: 10px; }
+}

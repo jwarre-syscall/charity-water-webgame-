@@ -29,6 +29,25 @@
   const timerCount = document.getElementById("timer-count");
   const loseTitle = document.getElementById("lose-title");
   const loseMessage = document.getElementById("lose-message");
+  const soundToggle = document.getElementById("sound-toggle");
+  const milestoneMessages = [
+    { progress: 0.25, message: "A quarter of the way there!" },
+    { progress: 0.5, message: "Halfway there! Keep it up!" },
+    { progress: 0.75, message: "Almost there—three quarters complete!" }
+  ];
+  const soundClips = {
+    click: new Audio("assets/sfx/click1.wav"),
+    collect: new Audio("assets/sfx/jingles_STEEL07.ogg"),
+    win: new Audio("assets/sfx/jingles_STEEL14.ogg"),
+    miss: new Audio("assets/sfx/jingles_STEEL15.ogg")
+  };
+  const soundPreferenceKey = "worldWideWaterSoundsEnabled";
+  let soundsEnabled = true;
+  try {
+    const savedSoundPreference = window.localStorage.getItem(soundPreferenceKey);
+    if (savedSoundPreference !== null) soundsEnabled = savedSoundPreference === "true";
+  } catch (_) { /* Sound remains available when storage is blocked. */ }
+  Object.values(soundClips).forEach((clip) => { clip.preload = "auto"; });
   const difficultySettings = {
     easy: { goal: 8, seconds: 100, spawnInterval: 1.65, minSpawn: .92, dropSpeed: .78, spawnJitter: 1.2 },
     normal: { goal: 12, seconds: 75, spawnInterval: 1.42, minSpawn: .62, dropSpeed: 1, spawnJitter: 1 },
@@ -58,6 +77,7 @@
   let messageClock = 2.4;
   let timeRemaining = difficultySettings.normal.seconds;
   let loseReason = "damage";
+  let milestonesShown = new Set();
   let shootHeld = false;
   let audioContext;
   let pointerMoving = false;
@@ -87,7 +107,24 @@
     messageClock = 1.8;
   }
 
+  function playSound(name, volume) {
+    if (!soundsEnabled) return;
+    const source = soundClips[name];
+    if (!source) return;
+    const clip = source.cloneNode();
+    clip.volume = typeof volume === "number" ? volume : 0.42;
+    clip.currentTime = 0;
+    clip.play().catch(() => { /* Browsers may block audio until the first interaction. */ });
+  }
+
+  function updateSoundToggle() {
+    soundToggle.textContent = soundsEnabled ? "Sound: On" : "Sound: Off";
+    soundToggle.setAttribute("aria-pressed", String(soundsEnabled));
+    soundToggle.setAttribute("aria-label", soundsEnabled ? "Turn game sounds off" : "Turn game sounds on");
+  }
+
   function sound(frequency, duration, type) {
+    if (!soundsEnabled) return;
     try {
       audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
@@ -110,6 +147,30 @@
     const fact = facts[index];
     document.getElementById(textId).textContent = fact.text;
     document.getElementById(linkId).href = fact.url;
+  }
+
+  function updateMilestones() {
+    const milestone = milestoneMessages.find((item) => cleaned >= Math.ceil(goal * item.progress) && !milestonesShown.has(item.progress));
+    if (!milestone) return false;
+    milestonesShown.add(milestone.progress);
+    say(milestone.message);
+    return true;
+  }
+
+  function recordRoundRecap(won) {
+    const modeName = difficultySelect.options[difficultySelect.selectedIndex].text.split("·")[0].trim();
+    const elapsed = Math.max(0, currentMode.seconds - Math.ceil(timeRemaining));
+    const timeDetail = won ? Math.ceil(timeRemaining) + " sec left" : elapsed + " sec played";
+    const summary = modeName + " · " + cleaned + "/" + goal + " clean drops · " + timeDetail;
+    let best = cleaned;
+    try {
+      const key = "worldWideWaterBest-" + difficultySelect.value;
+      const previous = Number(window.localStorage.getItem(key) || 0);
+      best = Math.max(cleaned, Number.isFinite(previous) ? previous : 0);
+      window.localStorage.setItem(key, String(best));
+    } catch (_) { /* Recap still works if the browser blocks local storage. */ }
+    document.getElementById(won ? "round-summary-win" : "round-summary-lose").textContent = summary;
+    document.getElementById(won ? "best-score-win" : "best-score-lose").textContent = best + " / " + goal + " clean drops";
   }
 
   function startGame() {
@@ -138,6 +199,7 @@
     loadingScreen.hidden = true;
     gameScreen.hidden = false;
     cleaned = 0;
+    milestonesShown = new Set();
     charges = 3;
     health = 3;
     damageCooldown = 0;
@@ -162,6 +224,8 @@
 
   function finishWin() {
     if (!running) return;
+    playSound("win", 0.55);
+    recordRoundRecap(true);
     running = false;
     keys.clear();
     shootHeld = false;
@@ -174,6 +238,8 @@
 
   function finishLose() {
     if (!running) return;
+    recordRoundRecap(false);
+    playSound("miss", 0.48);
     running = false;
     keys.clear();
     shootHeld = false;
@@ -263,12 +329,14 @@
 
   function cleanse(thing) {
     thing.node.remove();
-    sound(850 + Math.random() * 220, .15, "triangle");
     burst(thing.x, thing.y, "#77a8bb", 9);
     cleaned += 1;
     charges = Math.min(9, charges + 1);
     updateHud();
-    say(cleaned >= goal ? "The water is clean. A well is on its way!" : "Cleaned! " + (goal - cleaned) + " more to go.");
+    if (cleaned < goal) {
+      if (!updateMilestones()) say("Cleaned! " + (goal - cleaned) + " more to go.");
+      playSound("collect", 0.44);
+    }
     if (cleaned >= goal) finishWin();
   }
 
@@ -278,7 +346,7 @@
     updateHud();
     burst(thing.x, thing.y, "#2e9df7", 7);
     say("Fresh water collected. +2 shots!");
-    sound(700, .14, "sine");
+    playSound("collect", 0.5);
   }
 
   function hitObstacle(thing) {
@@ -288,7 +356,7 @@
     updateHud();
     burst(thing.x, thing.y, "#d69a67", 8);
     say("Muddy cloud! One point and one water charge lost.");
-    sound(180, .2, "triangle");
+    playSound("miss", 0.42);
   }
 
   function hitByDirtyDrop(thing) {
@@ -302,7 +370,7 @@
     window.setTimeout(() => jug.classList.remove("is-hit"), 620);
     burst(thing.x, thing.y, "#b87345", 12);
     updateHud();
-    sound(135, .28, "triangle");
+    playSound("miss", 0.48);
     if (health === 0) {
       say("Jerry took too many dirty water drops.");
       finishLose();
@@ -384,7 +452,14 @@
         hitObstacle(thing);
         return false;
       }
-      if (thing.y > 104) { thing.node.remove(); return false; }
+      if (thing.y > 104) {
+        if (thing.kind === "clean") {
+          playSound("miss", 0.34);
+          say("A clean drop slipped away. Watch for the next one.");
+        }
+        thing.node.remove();
+        return false;
+      }
       return true;
     });
     if (running) requestAnimationFrame(frame);
@@ -406,6 +481,17 @@
     }
     window.setTimeout(() => box.replaceChildren(), 3800);
   }
+
+  document.querySelectorAll("button:not(#sound-toggle)").forEach((button) => {
+    button.addEventListener("click", () => playSound("click", 0.28));
+  });
+  soundToggle.addEventListener("click", () => {
+    soundsEnabled = !soundsEnabled;
+    updateSoundToggle();
+    try { window.localStorage.setItem(soundPreferenceKey, String(soundsEnabled)); } catch (_) { /* Optional preference. */ }
+    if (soundsEnabled) playSound("click", 0.28);
+  });
+  updateSoundToggle();
 
   playButton.addEventListener("click", startGame);
   replayButton.addEventListener("click", startGame);

@@ -14,6 +14,7 @@
 <body>
   <header class="topbar">
     <span class="brand-note">A game concept inspired by charity: water</span>
+    <button class="sound-toggle" id="sound-toggle" type="button" aria-pressed="true" aria-label="Turn game sounds off">Sound: On</button>
   </header>
 
   <main>
@@ -137,6 +138,10 @@
       <p class="eyebrow"><span class="eyebrow-line"></span> ROUND OVER</p>
       <h2 id="lose-title">Jerry took too many dirty water drops.</h2>
       <p class="lose-copy"><span id="lose-message">The water got a little too muddy this time.</span> Jerry has <strong id="lose-score">0</strong> clean drops to show for it. Ready to give it another go?</p>
+      <div class="round-recap" aria-label="Round results">
+        <p id="round-summary-lose"></p>
+        <p>Personal best on this device: <strong id="best-score-lose">0 / 12</strong></p>
+      </div>
       <div class="fact-card lose-fact-card">
         <span class="fact-label">WHILE YOU CATCH YOUR BREATH…</span>
         <p id="lose-fact"></p>
@@ -154,6 +159,10 @@
       <p class="eyebrow"><span class="eyebrow-line"></span> MISSION COMPLETE</p>
       <h2 id="end-title">You helped build a well.</h2>
       <p class="end-copy">You cleansed <strong id="final-score">12</strong> dirty drops. Thanks for helping make clean water possible for everyone.</p>
+      <div class="round-recap" aria-label="Round results">
+        <p id="round-summary-win"></p>
+        <p>Personal best on this device: <strong id="best-score-win">0 / 12</strong></p>
+      </div>
       <div class="confetti" id="confetti" aria-hidden="true"></div>
       <div class="end-actions">
         <button class="play-button replay-button" id="replay-button" type="button">Play again <span aria-hidden="true">↻</span></button>
