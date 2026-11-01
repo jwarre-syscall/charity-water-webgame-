@@ -114,7 +114,7 @@
       const gain = audioContext.createGain();
       oscillator.type = type || "sine";
       oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-      gain.gain.setValueAtTime(.045, audioContext.currentTime);
+      gain.gain.setValueAtTime(.12, audioContext.currentTime);
       gain.gain.exponentialRampToValueAtTime(.001, audioContext.currentTime + duration);
       oscillator.connect(gain);
       gain.connect(audioContext.destination);
