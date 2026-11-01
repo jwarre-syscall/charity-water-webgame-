@@ -39,9 +39,9 @@
     click: new Audio("assets/sfx/click1.wav"),
     collect: new Audio("assets/sfx/jingles_STEEL07.ogg"),
     win: new Audio("assets/sfx/jingles_STEEL14.ogg"),
-    miss: new Audio("assets/sfx/jingles_STEEL15.ogg")
   };
   const soundPreferenceKey = "worldWideWaterSoundsEnabled";
+  let activeClip = null;
   let soundsEnabled = true;
   try {
     const savedSoundPreference = window.localStorage.getItem(soundPreferenceKey);
@@ -79,7 +79,6 @@
   let loseReason = "damage";
   let milestonesShown = new Set();
   let shootHeld = false;
-  let audioContext;
   let pointerMoving = false;
   let lastPointer = null;
 
@@ -111,33 +110,22 @@
     if (!soundsEnabled) return;
     const source = soundClips[name];
     if (!source) return;
+    if (activeClip) {
+      activeClip.pause();
+      activeClip.currentTime = 0;
+    }
     const clip = source.cloneNode();
     clip.volume = typeof volume === "number" ? volume : 0.42;
     clip.currentTime = 0;
-    clip.play().catch(() => { /* Browsers may block audio until the first interaction. */ });
+    activeClip = clip;
+    clip.addEventListener("ended", () => { if (activeClip === clip) activeClip = null; }, { once: true });
+    clip.play().catch(() => { if (activeClip === clip) activeClip = null; });
   }
 
   function updateSoundToggle() {
     soundToggle.textContent = soundsEnabled ? "Sound: On" : "Sound: Off";
     soundToggle.setAttribute("aria-pressed", String(soundsEnabled));
     soundToggle.setAttribute("aria-label", soundsEnabled ? "Turn game sounds off" : "Turn game sounds on");
-  }
-
-  function sound(frequency, duration, type) {
-    if (!soundsEnabled) return;
-    try {
-      audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gain = audioContext.createGain();
-      oscillator.type = type || "sine";
-      oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-      gain.gain.setValueAtTime(.045, audioContext.currentTime);
-      gain.gain.exponentialRampToValueAtTime(.001, audioContext.currentTime + duration);
-      oscillator.connect(gain);
-      gain.connect(audioContext.destination);
-      oscillator.start();
-      oscillator.stop(audioContext.currentTime + duration);
-    } catch (_) { /* Audio can be unavailable; visual play still works. */ }
   }
 
   function showFact(textId, linkId) {
@@ -174,10 +162,6 @@
   }
 
   function startGame() {
-    try {
-      audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
-      if (audioContext.state === "suspended") audioContext.resume();
-    } catch (_) { /* The game remains playable if audio is unavailable. */ }
     running = false;
     keys.clear();
     shootHeld = false;
@@ -239,7 +223,6 @@
   function finishLose() {
     if (!running) return;
     recordRoundRecap(false);
-    playSound("miss", 0.48);
     running = false;
     keys.clear();
     shootHeld = false;
@@ -312,7 +295,6 @@
     shotsLayer.appendChild(node);
     bullets.push({ node, x: player.x, y: y, speed: 53 });
     shotClock = .18;
-    sound(540 + Math.random() * 100, .07);
   }
 
   function burst(x, y, color, count) {
@@ -356,7 +338,6 @@
     updateHud();
     burst(thing.x, thing.y, "#d69a67", 8);
     say("Muddy cloud! One point and one water charge lost.");
-    playSound("miss", 0.42);
   }
 
   function hitByDirtyDrop(thing) {
@@ -370,7 +351,6 @@
     window.setTimeout(() => jug.classList.remove("is-hit"), 620);
     burst(thing.x, thing.y, "#b87345", 12);
     updateHud();
-    playSound("miss", 0.48);
     if (health === 0) {
       say("Jerry took too many dirty water drops.");
       finishLose();
@@ -454,7 +434,6 @@
       }
       if (thing.y > 104) {
         if (thing.kind === "clean") {
-          playSound("miss", 0.34);
           say("A clean drop slipped away. Watch for the next one.");
         }
         thing.node.remove();
@@ -489,6 +468,11 @@
     soundsEnabled = !soundsEnabled;
     updateSoundToggle();
     try { window.localStorage.setItem(soundPreferenceKey, String(soundsEnabled)); } catch (_) { /* Optional preference. */ }
+    if (!soundsEnabled && activeClip) {
+      activeClip.pause();
+      activeClip.currentTime = 0;
+      activeClip = null;
+    }
     if (soundsEnabled) playSound("click", 0.28);
   });
   updateSoundToggle();

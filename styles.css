@@ -477,3 +477,11 @@ body, body * {
   .round-recap { margin: 12px auto 15px; padding: 10px 12px; }
   .round-recap p { font-size: 10px; }
 }
+
+/* Keep the sound toggle beside Reset in the game controls. */
+.game-actions { display: flex; align-items: center; gap: 8px; }
+@media(max-width:560px) {
+  .game-actions { gap: 5px; }
+  .game-actions .sound-toggle { min-height: 30px; padding: 0 7px; font-size: 8px; }
+  .game-actions .reset-button { min-height: 30px; padding: 6px 7px; font-size: 9px; }
+}
