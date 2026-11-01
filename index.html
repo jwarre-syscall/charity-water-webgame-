@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffc907">
+  <meta name="description" content="Play World Wide Water, a cheerful mini game about clean water.">
+  <title>World Wide Water — charity: water</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <span class="brand-note">A game concept inspired by charity: water</span>
+  </header>
+
+  <main>
+    <section class="title-screen" id="title-screen" aria-labelledby="game-title">
+      <div class="title-copy">
+        <p class="eyebrow"><span class="eyebrow-line"></span> A WATER-WORLD ADVENTURE</p>
+        <h1 id="game-title">World Wide <span>Water</span></h1>
+        <div class="title-logo-card"><img src="assets/cw_logo_horizontal.png" alt="charity: water"></div>
+        <p class="title-description">Collect clean drops. Clear the muddy ones.<br>Help every drop find its way home.</p>
+        <button class="play-button" id="play-button" type="button">Play <span aria-hidden="true">→</span></button>
+        <div class="difficulty-picker">
+          <label for="difficulty-mode">Choose difficulty</label>
+          <select id="difficulty-mode" aria-describedby="difficulty-note">
+            <option value="easy">Easy · 8 drops · 100 seconds</option>
+            <option value="normal" selected>Normal · 12 drops · 75 seconds</option>
+            <option value="hard">Hard · 16 drops · 60 seconds</option>
+          </select>
+          <p id="difficulty-note">Harder rounds bring faster drops and more frequent waves.</p>
+        </div>
+        <p class="title-footnote">Move Jerry with the arrows · Hold Space to splash</p>
+      </div>
+      <div class="title-landscape" aria-hidden="true">
+        <div class="pond-water"></div>
+        <div class="pond-shimmer shimmer-one"></div><div class="pond-shimmer shimmer-two"></div>
+        <div class="island island-left"></div><div class="island island-right"></div>
+        <div class="title-globe" aria-hidden="true">
+          <div class="globe-surface">
+            <span class="globe-land globe-land-one"></span><span class="globe-land globe-land-two"></span>
+            <span class="globe-land globe-land-one"></span><span class="globe-land globe-land-two"></span>
+          </div>
+        </div>
+        <span class="landscape-drop drop-one"></span><span class="landscape-drop drop-two"></span>
+      </div>
+    </section>
+
+    <section class="game-screen" id="game-screen" aria-label="Game" hidden>
+      <div class="game-header">
+        <div>
+          <p class="eyebrow"><span class="eyebrow-line"></span> YOUR MISSION</p>
+          <h2>Clean up the water.</h2>
+        </div>
+        <button class="reset-button" id="reset-button" type="button" title="Restart this round">↻ <span>Reset</span></button>
+      </div>
+      <div class="game-layout">
+        <aside class="score-rail left-rail" aria-label="Clean water and lives">
+          <section class="score-tile saved-tile">
+            <span class="rail-icon clean-icon" aria-hidden="true"></span>
+            <span class="stat-label">WATER SAVED</span>
+            <strong><span id="cleaned-count">0</span><span class="stat-total"> / <span id="goal-total">12</span></span></strong>
+            <div class="progress-track" role="progressbar" aria-label="Dirty drops cleansed" aria-valuemin="0" aria-valuemax="12" aria-valuenow="0"><span id="progress-fill"></span></div>
+            <span class="progress-hint">drops cleansed</span>
+          </section>
+          <section class="score-tile lives-tile">
+            <span class="stat-label">JERRY'S LIVES</span>
+            <div class="health-hearts" id="health-hearts" aria-label="3 hits remaining"><span>♥</span><span>♥</span><span>♥</span></div>
+            <strong id="health-label">3 hits left</strong>
+          </section>
+        </aside>
+
+        <div class="arena" id="arena" aria-label="Game field. Use the arrow keys to move and Space or Z to shoot.">
+          <div class="lane-ripple ripple-one"></div><div class="lane-ripple ripple-two"></div>
+          <div class="actors" id="actors" aria-hidden="true"></div>
+          <div class="shots" id="shots" aria-hidden="true"></div>
+          <div class="particles" id="particles" aria-hidden="true"></div>
+          <div class="player-jug" id="player-jug" style="left:50%;top:79%" aria-label="Jerry Can">
+            <span class="jug-badge"><img src="assets/water-can-transparent.png" alt=""></span>
+          </div>
+          <div class="arena-message" id="arena-message" aria-live="polite">Collect blue drops to power your water shots!</div>
+        </div>
+
+        <aside class="score-rail right-rail" aria-label="Time, dirty drops, and water charges">
+          <section class="score-tile time-tile">
+            <span class="stat-label">TIME LEFT</span>
+            <strong><span id="timer-count">75</span><span class="stat-total"> sec</span></strong>
+            <span class="progress-hint">finish before the clock runs out</span>
+          </section>
+          <section class="score-tile dirty-tile">
+            <span class="rail-icon dirty-icon" aria-hidden="true"></span>
+            <span class="stat-label">DIRTY DROPS LEFT</span>
+            <strong id="dirty-left-count">12</strong>
+            <span class="progress-hint">cleanse them to build a well</span>
+          </section>
+          <section class="score-tile charges-tile">
+            <span class="rail-icon charge-icon" aria-hidden="true">✦</span>
+            <span class="stat-label">WATER CHARGES</span>
+            <strong id="charge-count">3</strong>
+            <span class="progress-hint">collect blue drops to refill</span>
+          </section>
+        </aside>
+      </div>
+
+      <div class="game-controls">
+        <div class="key-guide">
+          <span class="key-group"><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd></span>
+          <span>Move the jug</span><i></i><kbd class="space-key">SPACE</kbd><span>Shoot</span>
+        </div>
+        <div class="touch-pad" aria-label="Touch controls">
+          <button type="button" class="pad-button" data-direction="left" aria-label="Move left">←</button>
+          <button type="button" class="pad-button" data-direction="up" aria-label="Move up">↑</button>
+          <button type="button" class="pad-button" data-direction="down" aria-label="Move down">↓</button>
+          <button type="button" class="pad-button" data-direction="right" aria-label="Move right">→</button>
+          <button type="button" class="fire-button" id="fire-button"><span>✦</span> Shoot</button>
+        </div>
+        <p class="game-note">Dodge dirty drops. Three hits send Jerry back to the start.</p>
+      </div>
+    </section>
+
+    <section class="loading-screen" id="loading-screen" aria-live="polite" hidden>
+      <div class="loading-orbit" aria-hidden="true"><span class="loading-planet"></span><span class="loading-drop"></span></div>
+      <p class="eyebrow"><span class="eyebrow-line"></span> GETTING THE WATER FLOWING</p>
+      <h2>One moment, Jerry…</h2>
+      <div class="fact-card">
+        <span class="fact-label">A CHARITY: WATER FUN FACT</span>
+        <p id="loading-fact"></p>
+        <a id="loading-source" href="https://www.charitywater.org/" target="_blank" rel="noreferrer">Read more <span aria-hidden="true">↗</span></a>
+      </div>
+    </section>
+
+    <section class="lose-screen" id="lose-screen" aria-labelledby="lose-title" hidden>
+      <div class="lose-art" aria-hidden="true"><span class="lose-drop">●</span><span class="lose-spark">✳</span></div>
+      <p class="eyebrow"><span class="eyebrow-line"></span> ROUND OVER</p>
+      <h2 id="lose-title">Jerry took too many dirty water drops.</h2>
+      <p class="lose-copy"><span id="lose-message">The water got a little too muddy this time.</span> Jerry has <strong id="lose-score">0</strong> clean drops to show for it. Ready to give it another go?</p>
+      <div class="fact-card lose-fact-card">
+        <span class="fact-label">WHILE YOU CATCH YOUR BREATH…</span>
+        <p id="lose-fact"></p>
+        <a id="lose-source" href="https://www.charitywater.org/" target="_blank" rel="noreferrer">Read more <span aria-hidden="true">↗</span></a>
+      </div>
+      <button class="play-button" id="lose-replay-button" type="button">Play again <span aria-hidden="true">↻</span></button>
+    </section>
+
+    <section class="end-screen" id="end-screen" aria-labelledby="end-title" hidden>
+      <div class="well-art" aria-hidden="true">
+        <div class="well-sun"></div><div class="well-ground"></div>
+        <div class="well-frame"></div><div class="well-roof"></div><div class="well-rope"></div>
+        <div class="well-bucket"></div><div class="well-water"></div><span class="well-star">✳</span>
+      </div>
+      <p class="eyebrow"><span class="eyebrow-line"></span> MISSION COMPLETE</p>
+      <h2 id="end-title">You helped build a well.</h2>
+      <p class="end-copy">You cleansed <strong id="final-score">12</strong> dirty drops. Thanks for helping make clean water possible for everyone.</p>
+      <div class="confetti" id="confetti" aria-hidden="true"></div>
+      <div class="end-actions">
+        <button class="play-button replay-button" id="replay-button" type="button">Play again <span aria-hidden="true">↻</span></button>
+        <a href="https://www.charitywater.org/" target="_blank" rel="noreferrer">Learn about charity: water <span aria-hidden="true">↗</span></a>
+      </div>
+    </section>
+  </main>
+  <footer><span>World Wide Water is an educational game concept, not an official charity: water product or donation page.</span><nav class="footer-links" aria-label="charity: water links"><a href="https://www.charitywater.org/" target="_blank" rel="noopener noreferrer">charity: water website ↗</a><a href="https://www.charitywater.org/donate" target="_blank" rel="noopener noreferrer">Donate to charity: water ↗</a></nav></footer>
+  <script src="script.js"></script>
+</body>
+</html>
