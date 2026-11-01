@@ -35,19 +35,12 @@
     { progress: 0.5, message: "Halfway there! Keep it up!" },
     { progress: 0.75, message: "Almost there—three quarters complete!" }
   ];
-  const soundClips = {
-    click: new Audio("assets/sfx/click1.wav"),
-    collect: new Audio("assets/sfx/jingles_STEEL07.ogg"),
-    win: new Audio("assets/sfx/jingles_STEEL14.ogg"),
-  };
   const soundPreferenceKey = "worldWideWaterSoundsEnabled";
-  let activeClip = null;
   let soundsEnabled = true;
   try {
     const savedSoundPreference = window.localStorage.getItem(soundPreferenceKey);
     if (savedSoundPreference !== null) soundsEnabled = savedSoundPreference === "true";
   } catch (_) { /* Sound remains available when storage is blocked. */ }
-  Object.values(soundClips).forEach((clip) => { clip.preload = "auto"; });
   const difficultySettings = {
     easy: { goal: 8, seconds: 100, spawnInterval: 1.65, minSpawn: .92, dropSpeed: .78, spawnJitter: 1.2 },
     normal: { goal: 12, seconds: 75, spawnInterval: 1.42, minSpawn: .62, dropSpeed: 1, spawnJitter: 1 },
@@ -67,6 +60,7 @@
   let health = 3;
   let damageCooldown = 0;
   let lastFactIndex = -1;
+  let audioContext;
   let things = [];
   let bullets = [];
   let keys = new Set();
@@ -106,26 +100,27 @@
     messageClock = 1.8;
   }
 
-  function playSound(name, volume) {
-    if (!soundsEnabled) return;
-    const source = soundClips[name];
-    if (!source) return;
-    if (activeClip) {
-      activeClip.pause();
-      activeClip.currentTime = 0;
-    }
-    const clip = source.cloneNode();
-    clip.volume = typeof volume === "number" ? volume : 0.42;
-    clip.currentTime = 0;
-    activeClip = clip;
-    clip.addEventListener("ended", () => { if (activeClip === clip) activeClip = null; }, { once: true });
-    clip.play().catch(() => { if (activeClip === clip) activeClip = null; });
-  }
-
   function updateSoundToggle() {
     soundToggle.textContent = soundsEnabled ? "Sound: On" : "Sound: Off";
     soundToggle.setAttribute("aria-pressed", String(soundsEnabled));
     soundToggle.setAttribute("aria-label", soundsEnabled ? "Turn game sounds off" : "Turn game sounds on");
+  }
+
+  function sound(frequency, duration, type) {
+    if (!soundsEnabled) return;
+    try {
+      audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      oscillator.type = type || "sine";
+      oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+      gain.gain.setValueAtTime(.045, audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(.001, audioContext.currentTime + duration);
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + duration);
+    } catch (_) { /* Audio can be unavailable; visual play still works. */ }
   }
 
   function showFact(textId, linkId) {
@@ -162,6 +157,10 @@
   }
 
   function startGame() {
+    try {
+      audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioContext.state === "suspended") audioContext.resume();
+    } catch (_) { /* The game remains playable if audio is unavailable. */ }
     running = false;
     keys.clear();
     shootHeld = false;
@@ -208,7 +207,6 @@
 
   function finishWin() {
     if (!running) return;
-    playSound("win", 0.55);
     recordRoundRecap(true);
     running = false;
     keys.clear();
@@ -295,6 +293,7 @@
     shotsLayer.appendChild(node);
     bullets.push({ node, x: player.x, y: y, speed: 53 });
     shotClock = .18;
+    sound(540 + Math.random() * 100, .07);
   }
 
   function burst(x, y, color, count) {
@@ -311,6 +310,7 @@
 
   function cleanse(thing) {
     thing.node.remove();
+    sound(850 + Math.random() * 220, .15, "triangle");
     burst(thing.x, thing.y, "#77a8bb", 9);
     cleaned += 1;
     charges = Math.min(9, charges + 1);
@@ -327,7 +327,7 @@
     updateHud();
     burst(thing.x, thing.y, "#2e9df7", 7);
     say("Fresh water collected. +2 shots!");
-    playSound("collect", 0.5);
+    sound(700, .14, "sine");
   }
 
   function hitObstacle(thing) {
@@ -337,6 +337,7 @@
     updateHud();
     burst(thing.x, thing.y, "#d69a67", 8);
     say("Muddy cloud! One point and one water charge lost.");
+    sound(180, .2, "triangle");
   }
 
   function hitByDirtyDrop(thing) {
@@ -350,6 +351,7 @@
     window.setTimeout(() => jug.classList.remove("is-hit"), 620);
     burst(thing.x, thing.y, "#b87345", 12);
     updateHud();
+    sound(135, .28, "triangle");
     if (health === 0) {
       say("Jerry took too many dirty water drops.");
       finishLose();
@@ -460,19 +462,10 @@
     window.setTimeout(() => box.replaceChildren(), 3800);
   }
 
-  document.querySelectorAll("button:not(#sound-toggle)").forEach((button) => {
-    button.addEventListener("click", () => playSound("click", 0.28));
-  });
   soundToggle.addEventListener("click", () => {
     soundsEnabled = !soundsEnabled;
     updateSoundToggle();
     try { window.localStorage.setItem(soundPreferenceKey, String(soundsEnabled)); } catch (_) { /* Optional preference. */ }
-    if (!soundsEnabled && activeClip) {
-      activeClip.pause();
-      activeClip.currentTime = 0;
-      activeClip = null;
-    }
-    if (soundsEnabled) playSound("click", 0.28);
   });
   updateSoundToggle();
 
