@@ -35,7 +35,7 @@
     { progress: 0.5, message: "Halfway there! Keep it up!" },
     { progress: 0.75, message: "Almost there—three quarters complete!" }
   ];
-  const soundPreferenceKey = "worldWideWaterSoundsEnabled";
+  const soundPreferenceKey = "worldWideWaterSoundsEnabledOriginal";
   let soundsEnabled = true;
   try {
     const savedSoundPreference = window.localStorage.getItem(soundPreferenceKey);
