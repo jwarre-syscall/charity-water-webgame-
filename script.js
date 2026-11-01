@@ -317,7 +317,6 @@
     updateHud();
     if (cleaned < goal) {
       if (!updateMilestones()) say("Cleaned! " + (goal - cleaned) + " more to go.");
-      playSound("collect", 0.44);
     }
     if (cleaned >= goal) finishWin();
   }

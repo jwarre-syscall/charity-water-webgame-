@@ -37,7 +37,7 @@ Open `index.html` in a browser, or enable GitHub Pages for this public repositor
 
 ## Sound and replay
 
-- Short sound effects play for button clicks, collecting or cleansing drops, and wins. Shooting and hit/miss sounds are silent. The Sound button beside Reset mutes or enables the effects; the choice is remembered in the browser.
+- Short sound effects play for button clicks, collecting clean drops, and wins. Shooting and hit/miss sounds are silent. The Sound button beside Reset mutes or enables the effects; the choice is remembered in the browser.
 - Milestone messages appear at 25%, 50%, and 75% of the selected difficulty's goal.
 - End screens show the round score, time, difficulty, and the best score for that difficulty in this browser.
 - Audio assets by Kenney are CC0: [UI Audio](https://kenney.nl/assets/ui-audio) and [Music Jingles](https://kenney.nl/assets/music-jingles). See [sound credits](assets/sfx/SOUND_CREDITS.md).
